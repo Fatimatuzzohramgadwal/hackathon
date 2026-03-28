@@ -21,13 +21,38 @@ const companies = [
 ];
 
 const AdminDashboard = () => {
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const response = await fetch("/api/dashboard", {
+          headers: {
+            "Authorization": token
+          }
+        });
+        const data = await response.json();
+        if (data.user) {
+          setUser(data.user);
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile");
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
   return (
     <DashboardLayout role="admin">
       <AnimatedPage>
         <div className="space-y-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Placement Dashboard</h1>
+              <h1 className="text-2xl font-bold text-foreground">Admin: {user?.name || "Administrator"} Dashboard</h1>
               <p className="mt-1 text-sm text-muted-foreground">Overview of all placement activities.</p>
             </div>
             <motion.button

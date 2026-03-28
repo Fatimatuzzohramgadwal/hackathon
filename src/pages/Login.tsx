@@ -1,88 +1,88 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
-import AnimatedPage from "@/components/AnimatedPage";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const [showPw, setShowPw] = useState(false);
-  const [role, setRole] = useState("student");
+  const [credentials, setCredentials] = useState({
+    email: "",
+    password: "",
+    role: "student",
+  });
+
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: any) => {
+    setCredentials({ ...credentials, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    if (role === "admin") navigate("/admin");
-    else if (role === "recruiter") navigate("/recruiter");
-    else navigate("/student");
+    setError("");
+
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // ✅ Store JWT
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+
+        alert("Login successful!");
+
+        // Navigate based on role
+        if (data.role === "student") navigate("/student/dashboard");
+        else if (data.role === "officer") navigate("/officer/dashboard");
+        else if (data.role === "recruiter") navigate("/recruiter/dashboard");
+        else navigate("/admin");
+      } else {
+        setError(data.message || "Login failed");
+      }
+    } catch (err) {
+      setError("Server not reachable");
+    }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <AnimatedPage className="w-full max-w-md">
-        <div className="rounded-2xl border border-border bg-card p-8 shadow-card">
-          <div className="text-center">
-            <Link to="/" className="text-2xl font-bold text-foreground">
-              Place<span className="text-primary">Hub</span>
-            </Link>
-            <p className="mt-2 text-sm text-muted-foreground">Sign in to your account</p>
-          </div>
+    <div className="flex justify-center items-center h-screen">
+      <form onSubmit={handleSubmit} className="p-6 border rounded w-80">
+        <h2 className="text-xl mb-4">Login</h2>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">Role</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
-              >
-                <option value="student">Student</option>
-                <option value="admin">Placement Officer</option>
-                <option value="recruiter">Recruiter</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">Email</label>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
-                defaultValue="demo@placehub.com"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">Password</label>
-              <div className="relative">
-                <input
-                  type={showPw ? "text" : "password"}
-                  placeholder="••••••••"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 pr-10 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
-                  defaultValue="password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                >
-                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-              type="submit"
-              className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:opacity-90"
-            >
-              Sign In
-            </motion.button>
-          </form>
+        {error && <p className="text-red-500">{error}</p>}
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link to="/register" className="font-medium text-primary hover:underline">Sign up</Link>
-          </p>
-        </div>
-      </AnimatedPage>
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          onChange={handleChange}
+          className="w-full mb-2 p-2 border"
+        />
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          onChange={handleChange}
+          className="w-full mb-2 p-2 border"
+        />
+
+        <select name="role" onChange={handleChange} className="w-full mb-2 p-2 border">
+          <option value="student">Student</option>
+          <option value="officer">Officer</option>
+          <option value="recruiter">Recruiter</option>
+        </select>
+
+        <button className="w-full bg-blue-500 text-white p-2">
+          Login
+        </button>
+      </form>
     </div>
   );
 };

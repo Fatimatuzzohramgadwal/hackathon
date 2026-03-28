@@ -3,18 +3,26 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Briefcase, Users, Calendar, Bell, User, LogOut,
-  Menu, X, ChevronLeft, Building2, FileText, BarChart3, Settings
+  Menu, X, ChevronLeft, Building2, FileText, BarChart3, Settings, Users2, Code2, Sparkles, BookOpen, Mic, FileQuestion, Brain
 } from "lucide-react";
 
 interface NavItem {
   label: string;
-  path: string;
+  path?: string;
   icon: React.ElementType;
+  external?: string; // External URL
 }
 
 const studentNav: NavItem[] = [
   { label: "Dashboard", path: "/student", icon: LayoutDashboard },
-  { label: "Jobs", path: "/student/jobs", icon: Briefcase },
+  { label: "Jobs", external: "https://unstop.com/jobs", icon: Briefcase },
+  { label: "Internships", external: "https://unstop.com/internships", icon: Sparkles },
+  { label: "Courses", path: "/student/courses", icon: BookOpen },
+  { label: "Mock Test", path: "/student/test", icon: FileQuestion },
+  { label: "AI Assistant", path: "/student/ai-chat", icon: Brain },
+  { label: "Alumni", path: "/student/alumni", icon: Users2 },
+  { label: "Tech Events", external: "https://unstop.com/hackathons", icon: Code2 },
+  { label: "Analytics", path: "/student/analytics", icon: BarChart3 },
   { label: "Applications", path: "/student/applications", icon: FileText },
   { label: "Interviews", path: "/student/interviews", icon: Calendar },
   { label: "Profile", path: "/profile", icon: User },
@@ -30,17 +38,28 @@ const adminNav: NavItem[] = [
   { label: "Notifications", path: "/notifications", icon: Bell },
 ];
 
+const officerNav: NavItem[] = [
+  { label: "Dashboard", path: "/officer/dashboard", icon: LayoutDashboard },
+  { label: "Students", path: "/officer/dashboard", icon: Users },
+  { label: "Alumni", path: "/officer/alumni", icon: Users2 },
+  { label: "Companies", path: "/officer/companies", icon: Building2 },
+  { label: "Analytics", path: "/officer/analytics", icon: BarChart3 },
+  { label: "Notifications", path: "/notifications", icon: Bell },
+];
+
 const recruiterNav: NavItem[] = [
-  { label: "Dashboard", path: "/recruiter", icon: LayoutDashboard },
+  { label: "Dashboard", path: "/recruiter/dashboard", icon: LayoutDashboard },
+  { label: "Candidates", path: "/recruiter/dashboard", icon: Users },
   { label: "Job Posts", path: "/recruiter/jobs", icon: Briefcase },
-  { label: "Applicants", path: "/recruiter/applicants", icon: Users },
-  { label: "Interviews", path: "/recruiter/interviews", icon: Calendar },
+  { label: "Alumni", path: "/recruiter/alumni", icon: Users2 },
+  { label: "Companies", path: "/recruiter/companies", icon: Building2 },
+  { label: "Analytics", path: "/recruiter/analytics", icon: BarChart3 },
   { label: "Notifications", path: "/notifications", icon: Bell },
 ];
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  role: "student" | "admin" | "recruiter";
+  role: "student" | "admin" | "recruiter" | "officer";
 }
 
 const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
@@ -48,8 +67,8 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
-  const navItems = role === "admin" ? adminNav : role === "recruiter" ? recruiterNav : studentNav;
-  const roleLabel = role === "admin" ? "Placement Officer" : role === "recruiter" ? "Recruiter" : "Student";
+  const navItems = role === "admin" ? adminNav : role === "recruiter" ? recruiterNav : role === "officer" ? officerNav : studentNav;
+  const roleLabel = role === "admin" ? "Placement Officer" : role === "recruiter" ? "Recruiter" : role === "officer" ? "Officer" : "Student";
 
   const NavContent = () => (
     <div className="flex h-full flex-col">
@@ -76,16 +95,36 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
           const active = location.pathname === item.path;
+          const navClassName = `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+            active
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          }`;
+
+          // External link
+          if (item.external) {
+            return (
+              <a
+                key={item.external}
+                href={item.external}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMobileOpen(false)}
+                className={navClassName}
+              >
+                <item.icon className="h-[18px] w-[18px] shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </a>
+            );
+          }
+
+          // Internal link
           return (
             <Link
               key={item.path}
-              to={item.path}
+              to={item.path!}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                active
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
-              }`}
+              className={navClassName}
             >
               <item.icon className="h-[18px] w-[18px] shrink-0" />
               {!collapsed && <span>{item.label}</span>}
@@ -101,7 +140,9 @@ const DashboardLayout = ({ children, role }: DashboardLayoutProps) => {
           </div>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">John Doe</p>
+              <p className="truncate text-sm font-medium text-foreground">
+                {localStorage.getItem("token") ? (JSON.parse(atob(localStorage.getItem("token")!.split('.')[1])).name) : "John Doe"}
+              </p>
               <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
             </div>
           )}
