@@ -3,16 +3,20 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 5001;
 
 // 🔐 Secret key
-const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
+const JWT_SECRET = "mysecretkey";
 
 // ✅ CORS (connect frontend)
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:8080",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // 🔗 Mock Database (Fallback for Atlas connection issues) ✨
@@ -184,20 +188,13 @@ app.put("/api/applications/status", async (req, res) => {
   }
 });
 
-// 📂 SERVER STATIC FILES (FOR PRODUCTION) ✨
-app.use(express.static(path.join(__dirname, "../dist")));
-
 // 🧪 TEST ROUTE
-app.get("/api/health", (req, res) => {
+app.get("/", (req, res) => {
   res.send("Backend is running (MOCK DB MODE) 🚀");
 });
 
-// 🌐 CATCH-ALL (SEND REACT APP)
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../dist", "index.html"));
-});
 
 // 🚀 START SERVER
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+app.listen(5001, () => {
+  console.log("🚀 Server running at http://localhost:5001");
 });
